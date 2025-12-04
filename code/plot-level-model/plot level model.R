@@ -293,8 +293,7 @@ NimModel <- nimbleCode({
   
 # Effective sample size: 
   effectiveSize(a)
-  ESS(a)
-  # looks great 
+  # looks good 
   
   
   
