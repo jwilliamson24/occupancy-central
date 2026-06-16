@@ -11,6 +11,7 @@
 ## =================================================
 # rm(list=ls())
 
+  setwd("/Users/jasminewilliamson/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/occupancy-central")
   load("data/plot lvl occu rdata/e-plot_lvl_output_and_data_072525.rdata")
 
 ## load packages
@@ -50,7 +51,7 @@
   
   # subset site, date, owner, mgmt, treatments
   site.info <- site.lvl %>%
-    select(site_id, jul_date, landowner, mgmt_type, HB,BU,BS,HU,UU, precip_mm, days_since_rain)
+    dplyr::select(site_id, jul_date, landowner, mgmt_type, HB,BU,BS,HU,UU, precip_mm, days_since_rain)
   
   site.info$mgmt_type <- as.numeric(site.info$mgmt_type)
 
@@ -59,7 +60,7 @@
   
   # site, subplot, temp, lat, long, elev
   subplot.info <- subplot.lvl %>%
-    select(site_id, subplot, temp, lat, long, elev, veg_cov, soil_moist_avg, logs, decay_cl, canopy_cov)
+    dplyr::select(site_id, subplot, temp, lat, long, elev, veg_cov, soil_moist_avg, logs, decay_cl, canopy_cov)
   
   names(subplot.info)[names(subplot.info) == "logs"] <-  "DW"
   
@@ -239,30 +240,31 @@ NimModel <- nimbleCode({
               mcmc(chains[[3]][n.burn:n.iter,]))
   
   # save
-  save(a, file = "e-plot_lvl_output_072525.RData")
-  save(a, constants, Nimdata, NimModel, Niminits, file = "e-plot_lvl_output_and_data_072525.RData")
+  save(a, file = "e-plot_lvl_output_260309.RData")
+  save(a, constants, Nimdata, NimModel, Niminits, file = "e-plot_lvl_output_and_data_260309.RData")
   
   
   
 ## Diagnostics ------------------------------------------------------------
   
+  load("e-plot_lvl_output_and_data_260309.rdata")
+  load("o-plot_lvl_output_and_data_260309.rdata")
+  
 # R-hat values 
   gelman.diag(a)
-  # looks great
+  # looks great for both
   
 # Trace plots
   plot(a)
-  # looks great
+  # looks great for both
   
 # Estimates
   summary(a)
-  # a few estimates close to zero, potentially concerning?
-  # DW is really small? cc is really high?
+  # e - DW is really small? cc is really high?
+  # o - lots of estimates really close to zero?
   
 # Combine chains
   a=runjags::combine.mcmc(a)
-  colnames(mvSamples)
-  
   
 # Correlation matrix
   cor <- cor(a[, c("alpha0", "alpha1.t", "alpha2.t", "alpha3.precip", "alpha4.rdays",   
@@ -270,8 +272,6 @@ NimModel <- nimbleCode({
                    "beta13.psi.dec", "beta2.psi.HB", "beta3.psi.HU", "beta4.psi.BS", "beta5.psi.lat",  
                    "beta6.psi.lon", "beta8.psi.elev", "beta9.psi.DW"
                    )])
-  
-  # some really high correlations here -oopsies ######################
   
   threshold <- 0.6
   high_corr <- abs(cor) > threshold
@@ -283,17 +283,18 @@ NimModel <- nimbleCode({
     Correlation = cor[high_corr]
   )
   
+  # some really high correlations here -oopsies ######################
+  # worse for o (0.8) than for e (0.6)
+  
   # cc is moderately correlated to the harvest treatments - should i take it out?
-  
   # harvest treatments are highly correlated to each other - should i combine them?
-  
   # lat and long are highly correlated, chat gpt says i should remove them and 
   # add a spatial random effect instead?
   
   
 # Effective sample size: 
   effectiveSize(a)
-  # looks good 
+  # looks okay for both, smallest is 650 largest 23000 
   
   
   

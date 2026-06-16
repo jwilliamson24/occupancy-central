@@ -25,8 +25,8 @@
 
 ## load data ----------------------------------------------------------------------------------------------
   
-  subplot <- read.csv("data/subplot.complete.csv")
-  sals <- read.csv("data/sals.complete.csv", 
+  subplot <- read.csv("data/covariate matrices/subplot.complete.csv")
+  sals <- read.csv("data/occupancy/sals.complete.csv", 
                    colClasses = c(landowner="factor", stand="character", trt="factor",
                                   obs="factor", subplot="factor", recap="factor",
                                   pass="factor", spp="factor", cover_obj="factor", 

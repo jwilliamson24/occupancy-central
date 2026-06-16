@@ -15,153 +15,180 @@
 
 #### Simulate ----
 
-# I = sites
-I <- 127
-# J = plots within sites
-J <- 7
-# K = occasions
-K <- 3
+## 1. Sites and sampling strategy
+  
+  # I = sites
+  I <- 127
+  # J = plots within sites
+  J <- 7
+  # K = occasions
+  K <- 3
 
 
-# simulate some covariates
-canopycover <- rnorm(I) # simulates canopy cover values at I sites from a normal distribution with mean=0 and sd =1 (scaled)
-downedwood <-array(runif(n=I*J, -2, 2), dim =c(I,J)) # simulates dwd values at I sites at J plots from a uniform distribution from -2 to 2
+## 2. Covariates
 
-# # # # skip this bit see next section
-# this is a hacky way of doing the dummy variables for the categorical, shouldn't impact anything in terms of how recoverable parameters are
-# burnt <- rbinom(I, 1, 0.2)  # simulates whether site i was burned, probability set to 0.2
-# logged <- rbinom(I, 1, 0.2) # simulates whether site i was logged, probability set to 0.2
-# burntandlogged <- rbinom(I, 1, 0.2) # simulates whether site i was logged and then burned, probability set to 0.2
-# loggedandburnt <- rbinom(I, 1, 0.2)# simulates whether site i was burned and then logged , probability set to 0.2
-
-# this is the non-hacky way of doing the treatment using a multinomial distribution in base R (no crappy packages required!)
-# use multinomial distribution in base R to assign treatments to each site
-treatment <- rmultinom(I, size = 1, prob = c(0.2, 0.2,0.2,0.2 ,0.2))
-
-str(treatment)
-# make dataframe
-treatment <- data.frame(treatment)
-
-# create dummy variables for treatment categories
-
-
-# name for the model
-burnt <- c(as.matrix(treatment[1,]))
-logged <- c(as.matrix(treatment[2,]))
-burntandlogged <- c(as.matrix(treatment[3,]))
-loggedandburnt <- c(as.matrix(treatment[4,]))
-
-str(burnt)
-
-jasmineeffect <- rbinom(n=I*J*K, 1, 0.5)# simulates whether the observer was a pro salamander finder at site i plot j occasion k
-
-dim(jasmineeffect) <- c(I,J,K) #set dimensions to be 3D inline with data sites (rows) x plots (columns) x occasions (slices) 
-
-# look at the different slices
-jasmineeffect[,,1]
-jasmineeffect[,,2]
-jasmineeffect[,,3]
-
-
-# set coefficents for parameters (their impact on the world we are simulating)
-# (on log-odds scale; use plogis(x) to see value on probability-scale, e.g. for beta0.psi/mean occupancy)
-beta0.psi <- 1 # mean occupancy (the intercept)
-beta1.psi <- 1 # slope term for canopy cover on site occupancy (positive)
-beta2.psi <- -1 # slope term for burnt on site occupancy (negative)
-beta3.psi <- -1.5 # slope term for logging on site occupancy (negative effect)
-beta4.psi <- -1.75 # slope term for burnt and logged on site occupancy 
-beta5.psi <- -1.25 # slope term for logged and then burnt on site occupancy 
-beta0.theta <- 1 # mean plot use (the intercept for plot usage)
-# sd.theta <- runif(1, 0.5, 1.5) # this is the standard deviation for a random effect fit on plot use
-beta1.theta <- 1 # slope term for downed wood on plot use
-alpha0 <- 0 # mean detection probability (the intercept for detection)
-# alpha1 <- 1.5 # the slope term for jasmineeffect on detection probability
+  canopycover <- rnorm(I) # simulates canopy cover vals at I sites from normal distribution with mean=0 and sd=1 (scaled)
+  downedwood <-array(runif(n=I*J, -2, 2), dim =c(I,J)) # simulates dwd vals at I sites, J plots from uniform dist from -2 to 2
+  
+  # # # # skip this bit see next chunk
+  # this is a hacky way of doing dummy variables for categorical, shouldn't impact how recoverable parameters are
+  # burnt <- rbinom(I, 1, 0.2)  # simulates whether site i was burned, probability set to 0.2
+  # logged <- rbinom(I, 1, 0.2) # simulates whether site i was logged, probability set to 0.2
+  # burntandlogged <- rbinom(I, 1, 0.2) # simulates whether site i was logged and then burned, probability set to 0.2
+  # loggedandburnt <- rbinom(I, 1, 0.2)# simulates whether site i was burned and then logged , probability set to 0.2
+  
+  # this is the non-hacky way of doing the treatment using a multinomial distribution in base R (no crappy packages required!)
+  # use multinomial distribution in base R to assign treatments to each site
+  treatment <- rmultinom(I, size = 1, prob = c(0.2, 0.2,0.2,0.2 ,0.2))
+  
+  str(treatment)
+  treatment <- data.frame(treatment) # make dataframe
+  
+  # create dummy variables for treatment categories
+  
+  # name them for the model
+  burnt <- c(as.matrix(treatment[1,]))
+  logged <- c(as.matrix(treatment[2,]))
+  burntandlogged <- c(as.matrix(treatment[3,]))
+  loggedandburnt <- c(as.matrix(treatment[4,]))
+  
+  str(burnt)
+  
+  # observation covs
+  jasmineeffect <- rbinom(n=I*J*K, 1, 0.5)# simulates whether observer was a pro salamander finder at site i, plot j, occasion k
+  
+  dim(jasmineeffect) <- c(I,J,K) #set dimensions to be 3D inline with data sites (rows) x plots (columns) x occasions (slices) 
+  
+  # look at the different slices
+  jasmineeffect[,,1]
+  jasmineeffect[,,2]
+  jasmineeffect[,,3]
 
 
+## 3. Set coefficient effect values (slopes) for all models
 
-# calculate psi (occupancy probability) of each site using a logit-link
-psi <- matrix(ncol = I)  
-for (i in 1:I){  
-  psi[i] <- plogis(beta0.psi + beta1.psi * canopycover[i] + beta2.psi * burnt[i] + beta3.psi * logged[i] + 
-                     beta4.psi * burntandlogged[i] + beta5.psi * loggedandburnt[i])
-                  #+ beta1.psi * canopycover[i] 
-}
+  # set coefficents for parameters (their impact on the world we are simulating)
+  # (on log-odds scale; use plogis(x) to see value on probability-scale, e.g. for beta0.psi/mean occupancy)
+  beta0.psi <- 1 # mean occupancy (the intercept)
+  beta1.psi <- 1 # slope term for canopy cover on site occupancy (positive)
+  beta2.psi <- -1 # slope term for burnt on site occupancy (negative)
+  beta3.psi <- -1.5 # slope term for logging on site occupancy (negative effect)
+  beta4.psi <- -1.75 # slope term for burnt and logged on site occupancy 
+  beta5.psi <- -1.25 # slope term for logged and then burnt on site occupancy 
+  beta0.theta <- 1 # mean plot use (the intercept for plot usage)
+  # sd.theta <- runif(1, 0.5, 1.5) # this is the standard deviation for a random effect fit on plot use
+  beta1.theta <- 1 # slope term for downed wood on plot use
+  alpha0 <- 0 # mean detection probability (the intercept for detection)
+  # alpha1 <- 1.5 # the slope term for jasmineeffect on detection probability
 
-mean(psi)
-hist(psi)
-range(psi)
 
-# calculate true z states 
-# (this is whether a salamander occurs at a site or not, and is the result of a bernoulli/binomial trail of probability psi)
-z <- matrix(ncol = I)
-for (i in 1:I){
-  z[i] <- rbinom(1, 1, psi[i])
-}
-
-sum(z)  # (my data = 56 ENES and 77 OSS)
-
-# mean centered random effect for plot use
-# plot.theta <- matrix(ncol=I)
-# for (i in 1:I){
-#   plot.theta[i] <- rnorm(1, beta0.theta, sd=sd.theta)
-# }
-
-# calculate use of plots (theta) within sites 
-# theta is our probability of use of plot j in site i
-theta <- matrix(ncol = J, nrow=I)
-for (i in 1:I){
-  for (j in 1:J){
-    theta[i,j] <- plogis(beta0.theta) #+ beta1.theta * downedwood[i,j]) 
+## 4. Ecological process: occupancy probability model
+  
+  # calculate psi (occupancy probability) of each site using a logit-link
+  psi <- matrix(ncol = I)  
+  for (i in 1:I){  
+    psi[i] <- plogis(beta0.psi + beta1.psi * canopycover[i] + beta2.psi * burnt[i] + beta3.psi * logged[i] + 
+                       beta4.psi * burntandlogged[i] + beta5.psi * loggedandburnt[i])
+                    #+ beta1.psi * canopycover[i] 
   }
-}
+  
+  mean(psi)
+  hist(psi)
+  range(psi)
 
-# calculate true use state (bernoulli/binomial trial of probability omega [w], conditional on z = 1, or site is occupied)
-w <- matrix(ncol = J, nrow = I)
-for (i in 1:I){
-  for (j in 1:J){
-    w[i,j] <- (rbinom(1,1, theta[i,j])*z[i])
+  
+## 5. Ecological process: latent occupancy model
+  
+  # calculate true z states 
+  # (this is whether a salamander occurs at a site or not, and is the result of a bernoulli/binomial trail of probability psi)
+  z <- matrix(ncol = I)
+  for (i in 1:I){
+    z[i] <- rbinom(1, 1, psi[i])
   }
-}
+  
+  sum(z)  # (my data = 56 ENES and 77 OSS)
+  
+  # mean centered random effect for plot use
+  # plot.theta <- matrix(ncol=I)
+  # for (i in 1:I){
+  #   plot.theta[i] <- rnorm(1, beta0.theta, sd=sd.theta)
+  # }
 
-sum(w) # = 251, which means 251 plots are being used?
-
-# calculate detection probability (p)
-#3D matrix (i=site, j=plot, k=occasion)
-p = array(0, dim = c(I, J, K))
-for (i in 1:I){
-  for (j in 1:J){
-    for (k in 1:K){
-      p[i,j,k] <- plogis(alpha0)# + alpha1 * jasmineeffect[i,j,k]) 
+  
+## 6. Estimated plot use model
+  
+  # calculate use of plots (theta) within sites 
+  # theta is our probability of use of plot j in site i
+  theta <- matrix(ncol = J, nrow=I)
+  for (i in 1:I){
+    for (j in 1:J){
+      theta[i,j] <- plogis(beta0.theta) #+ beta1.theta * downedwood[i,j]) 
     }
   }
-}
 
-# simulate observations (sampling) 
-# at site i, plot j, and occasion k, as a bernoulli/binomial trial of probability p, conditional on use of the plot 
-y = array(0, dim = c(I, J, K))
-for (i in 1:I){
-  for (j in 1:J){
-    for (k in 1:K){
-      y[i,j,k] <- (rbinom(1, 1, p[i,j,k])*w[i,j])
+  
+## 7. Latent plot use model 
+  
+  # calculate true use state (bernoulli/binomial trial of probability omega [w], conditional on z = 1, or site is occupied)
+  w <- matrix(ncol = J, nrow = I)
+  for (i in 1:I){
+    for (j in 1:J){
+      w[i,j] <- (rbinom(1,1, theta[i,j])*z[i])
     }
   }
-}
 
-sum(y[,,1]) # sum = 160
-sum(y[,,2]) # sum = 160
-y[,,3] # sum = 152
+  sum(w) # = 251, which means 251 plots are being used?
 
-# sum of oss plot dets = 163, sum of enes plot dets = 107
 
-# check out structure of observation data y
-str(y)
+## 8. Observation process: detection probability model
+  
+  # calculate detection probability (p)
+  #3D matrix (i=site, j=plot, k=occasion)
+  p = array(0, dim = c(I, J, K))
+  for (i in 1:I){
+    for (j in 1:J){
+      for (k in 1:K){
+        p[i,j,k] <- plogis(alpha0)# + alpha1 * jasmineeffect[i,j,k]) 
+      }
+    }
+  }
+
+  
+## 9. Observation process: binary measurement error model
+  
+  # simulate observations (sampling) 
+  # at site i, plot j, and occasion k, as a bernoulli/binomial trial of probability p, conditional on use of the plot 
+  y = array(0, dim = c(I, J, K))
+  for (i in 1:I){
+    for (j in 1:J){
+      for (k in 1:K){
+        y[i,j,k] <- (rbinom(1, 1, p[i,j,k])*w[i,j])
+      }
+    }
+  }
+
+  
+## 10. Output: simulated counts at each site, plot, and replicate
+  
+  sum(y[,,1]) # sum = 160
+  sum(y[,,2]) # sum = 160
+  y[,,3] # sum = 152
+  
+  # sum of oss plot dets = 163, sum of enes plot dets = 107
+  
+  # check out structure of observation data y
+  str(y)
 
 
 
 
 #### Model ----
 
+  # use our simulated data in a hierarchical model; 
+  # if the model output gives us effects similar to those we created in step 3,
+  # then our model is doing a good job
 
+  
 # run the chains
 n.chains = 3
 chains = vector("list", n.chains)
