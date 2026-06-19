@@ -1,12 +1,13 @@
 ## =================================================
 ##
-## Title: multinom-data-manipulation
+## Title: multinom-data-formatting
 ## Author: Jasmine Williamson
 ## Date Created: 6/16/2026
 ##
 ## Description: Looked at raw counts for age classes per plot, and looks like there arent
 ## enough to justify doing a separate multinom for each spp/age class (30 indivs).
-## Also created count dataframes for multinomial model, and fixed missing obs values from 2023.
+##
+## Also created count dataframes for multinomial model (see bottom), and fixed missing obs values from 2023.
 ##
 ## =================================================
 
@@ -16,17 +17,13 @@
   # rm(list=ls())
   setwd("/Users/jasminewilliamson/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/occupancy-central/data")
   
-  # library(unmarked)
-  # library(ggplot2)
-  # library(stats)
-  # library(MASS)
   library(tidyverse)
   library(dplyr)
 
 
 ## load data ----------------------------------------------------------------------------------------
 
-  subplot <- read.csv("data/covariate matrices/subplot.complete.csv")
+  subplot <- read.csv("data/covariate matrices/subplot.complete.new.csv")
   sals <- read.csv("data/occupancy/sals.complete.csv", 
                    colClasses = c(landowner="factor", stand="character", trt="factor",
                                   obs="factor", subplot="factor", recap="factor",
@@ -37,7 +34,8 @@
 ## df with all plots/occasions ----------------------------------------------------------------------
 
   #creating occupancy df with non-detections
-  df.new <- subplot[,c(1,3,5,6,7,9)] # siteID, stand, subplots, year, date, treatment
+  df.new <- subplot[,c("site_id", "stand", "trt", "year", "subplot", "lat", "long", "elev", "soil_moist_avg", 
+                       "jul_date", "date", "dwd_count", "decay_cl", "char_cl", "temp")] 
   df.new$subplot <- as.factor(df.new$subplot)
   df.new <- df.new[order(df.new$site_id, df.new$subplot),] # reorder
   
@@ -53,18 +51,22 @@
 
 # merge sals with full subplot/pass df -------------------------------------------------------------
   
+  # subset
   sals <- sals %>%
-    dplyr::filter(recap != 1)
+    dplyr::filter(recap != 1) # remove recaps
   sals.new <- sals[,c(1,11:18)] 
   sals.new <- filter(sals.new, spp %in% c("OSS", "ENES"))
-  sals.new$detect = 1  
+  sals.new$detect = 1  # add detect col
 
   
   # merge
   
-  #add in sites with no detections by merging with df that has all site/subplot combos listed
-  df.merge <- full_join(df.new,sals.new,by=c("site_id","subplot","pass"))
+  # add in sites with no detections by merging with df that has all site/subplot combos listed
+  df.merge <- full_join(df.new, sals.new, by=c("site_id","subplot","pass"))
   df.merge$detect <- ifelse(is.na(df.merge$detect), 0, df.merge$detect) #make NA's = 0
+  
+  # this df has additional rows bc it is still at the salamander level with a spp column, so there may be
+  # multiple rows per plot/pass
 
   
 #### raw counts of sals ---------------------------------------------------------------------------
@@ -80,8 +82,8 @@
   sal_counts_wide <- sal_counts_wide[-6] #removing enes unknown age class
   sal_counts_wide <- sal_counts_wide[-7] #removing oss unknown age class
   
-  sum(df.merge$detect[df.merge$spp == "OSS"], na.rm = TRUE)
-  sum(df.merge$detect[df.merge$spp == "ENES"], na.rm = TRUE)
+  sum(df.merge$detect[df.merge$spp == "OSS"], na.rm = TRUE) # 252
+  sum(df.merge$detect[df.merge$spp == "ENES"], na.rm = TRUE) # 138
   
   
 #### fix observer data ------------------------------------------------------------------------
@@ -113,10 +115,16 @@
     df.new.wide[is.na(df.new.wide)] <- ""    
     
     write.csv(df.new.wide, "data/abundance/df-merge-for-obs.csv", row.names = FALSE)
+
+    
+    
+#### ---------------------------------------------------------------------------------       
+##### run from here down to recreate fixed df if need to redo the matrices below #####
     
 # here is where i inputted some 2023 data in the above csv, gave up, and uploaded partially fixed df below
     
     part.fixed <- read.csv("data/abundance/df-merge-for-obs.csv")
+    
     
 # code from claude for inputting random obs assignments for rest of df
     
@@ -173,7 +181,8 @@
       mutate(obs = coalesce(obs, obs_filled)) %>%
       select(-obs_filled)
     
-    
+
+       
 #### make counts dataframe with updated df ------------------------------------------------------------------
     
     # oss
