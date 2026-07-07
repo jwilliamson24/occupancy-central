@@ -17,6 +17,7 @@
   
   library(unmarked)
   library(dplyr)
+  library(tidyr)
 
 
 ## load data ----------------------------------------------------------------------------------------
@@ -31,7 +32,7 @@
   
   # subset
   subplot <- subplot[, c("site_id", "stand", "trt", "year", "subplot", "lat", "long", "elev", "soil_moist_avg", 
-                       "jul_date", "date", "dwd_count", "decay_cl", "char_cl", "temp")] 
+                       "jul_date", "date", "dwd_count", "decay_cl", "char_cl", "temp", "canopy_cov")] 
   
   # set decay cl and char cl NA's to zero
   subplot <- subplot %>%
@@ -105,11 +106,11 @@
   
   # scale continuous covs
   model_data_o <- model_data_o %>%
-    mutate(across(c(soil_moist_avg, dwd_count, decay_cl, temp, precip_mm, days_since_rain),
+    mutate(across(c(soil_moist_avg, dwd_count, decay_cl, temp, precip_mm, days_since_rain, canopy_cov),
                   ~ as.numeric(scale(.)), .names = "{.col}_z"))
   
   model_data_e <- model_data_e %>%
-    mutate(across(c(soil_moist_avg, dwd_count, decay_cl, temp, precip_mm, days_since_rain),
+    mutate(across(c(soil_moist_avg, dwd_count, decay_cl, temp, precip_mm, days_since_rain, canopy_cov),
                   ~ as.numeric(scale(.)), .names = "{.col}_z"))
   
   
@@ -130,9 +131,9 @@
 
   # site covs
   site_covs_o <- model_data_o %>%
-    select(trt, soil_moist_avg_z, dwd_count_z, decay_cl_z, temp_z, precip_mm_z, days_since_rain_z)
+    select(trt, soil_moist_avg_z, dwd_count_z, decay_cl_z, temp_z, precip_mm_z, days_since_rain_z, canopy_cov_z)
   site_covs_e <- model_data_e %>%
-    select(trt, soil_moist_avg_z, dwd_count_z, decay_cl_z, temp_z, precip_mm_z, days_since_rain_z)
+    select(trt, soil_moist_avg_z, dwd_count_z, decay_cl_z, temp_z, precip_mm_z, days_since_rain_z, canopy_cov_z)
   
   site_covs_o$trt <- relevel(as.factor(site_covs_o$trt), ref = "UU")
   site_covs_e$trt <- relevel(as.factor(site_covs_e$trt), ref = "UU")
@@ -222,8 +223,8 @@
   
   
   # full model - all hypothesized covs
-  fm_full_e <- multinomPois(~temp_z + precip_mm_z + days_since_rain_z + observer # detection formula
-                            ~trt + soil_moist_avg_z + dwd_count_z + decay_cl_z,  # abundance formula
+  fm_full_e <- multinomPois(~precip_mm_z + observer # detection formula
+                            ~canopy_cov_z + decay_cl_z,  # abundance formula
                             umf_e)
   summary(fm_full_e)
   
