@@ -23,8 +23,8 @@
 
 ## load data ----------------------------------------------------------------------------------------
 
-  subplot <- read.csv("data/covariate matrices/subplot.complete.new.csv")
-  sals <- read.csv("data/occupancy/sals.complete.csv", 
+  subplot <- read.csv("covariate matrices/subplot.complete.new.csv")
+  sals <- read.csv("occupancy/sals.complete.csv", 
                    colClasses = c(landowner="factor", stand="character", trt="factor",
                                   obs="factor", subplot="factor", recap="factor",
                                   pass="factor", spp="factor", cover_obj="factor", 
@@ -123,7 +123,7 @@
     
 # here is where i inputted some 2023 data in the above csv, gave up, and uploaded partially fixed df below
     
-    part.fixed <- read.csv("data/abundance/df-merge-for-obs.csv")
+    part.fixed <- read.csv("abundance/df-merge-for-obs.csv")
     
     
 # code from claude for inputting random obs assignments for rest of df
@@ -249,18 +249,47 @@
     
     write.csv(df.counts.e, "data/abundance/pass-level-counts-e.csv", row.names = FALSE)
     
+ 
+######## those last two dfs above are the ones that load into the multinomial_unmarked_simulator script ########
     
     
     
+#### counts per treatment per spp ---------------------------------------------
     
     
-    ######## these last two dfs are the ones that load into the multinomial model script ########
+    df.merge.fixed %>% 
+      filter(detect == 1, spp == "OSS") %>% 
+      count(trt) %>%
+      left_join(
+        df.merge.fixed %>% filter(detect == 1, age_class == "U", spp == "OSS") %>% count(trt, name = "n_unknown"),
+        by = "trt"
+      ) %>%
+      mutate(pct_unknown = replace_na(n_unknown, 0) / n * 100)
+    
+    # trt  n n_unknown pct_unknown
+    # 1  BS 27         3   11.111111
+    # 2  BU 74         3    4.054054
+    # 3  HB 44         2    4.545455
+    # 4  HU 36         1    2.777778
+    # 5  UU 71         2    2.816901
     
     
+    df.merge.fixed %>% 
+      filter(detect == 1, spp == "ENES") %>% 
+      count(trt) %>%
+      left_join(
+        df.merge.fixed %>% filter(detect == 1, age_class == "U", spp == "ENES") %>% count(trt, name = "n_unknown"),
+        by = "trt"
+      ) %>%
+      mutate(pct_unknown = replace_na(n_unknown, 0) / n * 100)
     
     
-    
-    
+    # trt    n   n_unknown pct_unknown
+    # 1  BS  5         1   20.000000
+    # 2  BU 49         4    8.163265
+    # 3  HB 16         1    6.250000
+    # 4  HU 17        NA    0.000000
+    # 5  UU 51         1    1.960784
     
     
     

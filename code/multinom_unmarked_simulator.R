@@ -13,8 +13,8 @@
 ##  4. Compares recovered estimates to the true simulated values
 ##  5. Repeats simulations 50 times and tracks convergence/spread
 ##  Goal: see if we can recreate the simulated parameter values by
-##  modelling the simulated data, and whether ~30 captures over 127
-##  sites is enough to do that reliably...
+##  modelling the simulated data, and whether ~30 captures 
+##  is enough to do that reliably... (its not)
 ##
 ##  =================================================
 
@@ -28,7 +28,7 @@
 ## ------------------------------------------------------------
 
   # I = sites
-  I <- 127
+  I <- 889
   # K = removal passes (occasions) per site visit
   K <- 3
   
@@ -53,14 +53,14 @@
   # on log-scale for lambda; use exp(x) to see the value on the abundance scale
   # p uses logit-link, so plogis(alpha0) = per-pass detection probability
   
-  beta0.lambda        <- log(0.65)   # mean abundance/site in control sites (30: 0.35), (50: 0.75), (60: 0.9)
+  beta0.lambda        <- log(0.12)   # mean abundance/site in control [127 sites: (30: 0.35), (50: 0.75), (60: 0.9)]
   beta.burn.lambda     <- log(1)      # burn effect: no change vs control 
   beta.harvest.lambda  <- log(0.4)    # harvest effect: strong negative 
   beta.salvage.lambda  <- log(0.25)   # salvage effect: strong negative 
   beta.harvestburn.lambda <- log(0.3)    # harv-burn effect: negative
   beta.canopy.lambda   <- 0.3         # positive: more canopy -> more sals
   beta.dwd.lambda      <- 0.2         # positive: more downed wood -> more sals
-  alpha0       <- qlogis(0.42)   # mean per-pass detection prob, plogis(alpha0) = 0.4 det prob
+  alpha0       <- qlogis(0.2)   # mean per-pass detection prob, plogis(alpha0) = 0.4 det prob
   alpha.dsr    <- -0.4           # negative: more days since rain -> drier -> lower detection
   
   
@@ -200,8 +200,8 @@
     canopycover = 0,
     downedwood  = 0
   )
-  predicted_lambda <- predict(fit2, type = "state", newdata = newdat)
-  cbind(newdat, predicted_lambda)
+  predicted_lambda <- predict(fit2, type = "state", newdat = newdat_abund)
+  cbind(newdat_abund, predicted_lambda)
   
   
   
@@ -351,7 +351,14 @@
 
 #### Notes --------------------------------------------------------------------
   
-  # Running the sim replicate 50x with 30 captures:
+  # Redoing this with 889 sites and 30 captures is even worse
+  # overall det prob is lower, but with same captures
+  # makes everything harder to estimate
+  # none of the estimates are usable, SD's are bigger than estimate
+  
+  
+  
+  # Running the sim replicate 50x with 30 captures and 127 sites:
   # some covs are fine, with decent estimates but big-ish SE's
   # treatments that had very few (<5ish) captures had huge SE's and
   # estimates are way off
