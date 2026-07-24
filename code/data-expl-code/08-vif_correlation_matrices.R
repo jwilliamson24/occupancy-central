@@ -13,6 +13,7 @@
 ## load packages
   library(corrplot)
   library(car)
+  library(dplyr)
 
 ## load data -------------------------------------------------------------------
 
@@ -24,7 +25,7 @@
   env2 <- dat[c(1:25,28:31)]
   
   #extra dwd metrics
-  dwd <- read.csv("data/dwd.extra.metrics.csv")
+  dwd <- read.csv("data/covariate matrices/dwd.extra.metrics.csv")
   
   #add dwd dens and avg volume from dwd to env df
   env_merge <- cbind(env2, dwd[,c("dwd_dens","avg_volume")])
