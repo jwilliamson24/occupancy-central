@@ -1,15 +1,14 @@
 ## =================================================
 ##
-## Title: age_class_detection_simulator.R
+## Title: nmix-age-class-detection-sim-treatment.R
 ##
 ## Author: Jasmine Williamson
 ## Date Created: 7/15/2026
 ##
 ## Description: Age-structured multinomial N-mixture (removal sampling)
-## simulator, built to answer the question: how much does
-## differential detection across age classes (small ones harder to see)
-## distort estimated age composition (pi_age), and can the model still
-## recover TRUE treatment differences in age structure once that
+## Goal: figure out how much differential detection across age classes 
+## affect estimated age composition (pi_age), and can the model still
+## recover true treatment differences in age structure once that
 ## detection difference is accounted for?
 ##
 ##  1. Simulates true site abundance (N), split into 3 age classes
@@ -20,10 +19,10 @@
 ##  3. Fits a Bayesian hierarchical model in NIMBLE to recover pi_age
 ##     (per treatment) and p_age (per age class) from the simulated data
 ##  4. Compares recovered estimates to the true simulated values
-##  5. Repeats the whole thing across 3 detection-gap SCENARIOS
-##     (no gap / moderate gap / large gap) at real-data sample sizes,
-##     to see how much detection differences bias the age-composition
-##     estimates, and whether treatment differences are still recoverable
+##  5. Repeats the whole thing across 3 detection-gap scenarios
+##     (no gap / moderate gap / large gap), to see how much detection
+##     differences bias the age-composition estimates, and whether 
+##     treatment differences are still recoverable
 ##
 ##  =================================================
 
@@ -60,12 +59,10 @@
 
   # these offsets are set (roughly) so that expected total captures per
   # treatment land near your real OSS numbers (UU=71, BU=74, HB=44, HU=36, BS=27)
-  # spread across ~178 sites/treatment (889 total / 5 treatments) - lambda per
-  # site has to be much lower than a 50-sites/treatment version to hit the
-  # same real capture totals over more sites
+  # spread across ~178 sites/treatment (889 total / 5 treatments)
+  
   # ADJUST beta0.lambda / beta.trt below and re-run section 1-2 until
   # sum(y) by treatment matches your real per-treatment totals
-  # (same trial-and-error approach as multinom_unmarked_simulator.R)
 
   beta0.lambda      <- log(0.55)         # mean site abundance, UU (reference)
   beta.trt          <- c(UU = 0,
@@ -112,9 +109,7 @@
 ## 2. SIMULATE OBSERVATIONS
 ## ------------------------------------------------------------
 
-  # detection probability by age class - THIS IS THE THING WE ARE TESTING
-  # start with a moderate gap as the main worked example below;
-  # section 5 loops over three scenarios (none/moderate/large)
+  # detection probability by age class
   p_age_true <- c(J = 0.25, SA = 0.35, A = 0.50)
 
   # split total N at each site into age classes using the site's
@@ -129,8 +124,6 @@
 
 
   # simulate removal-sampling observations, separately per age class
-  # (same sequential removal logic as multinom_unmarked_simulator.R,
-  # just repeated for each of the 3 age classes)
   y <- array(0, dim = c(I, K, 3), dimnames = list(NULL, NULL, c("J","SA","A")))
   for (i in 1:I) {
     for (a in 1:3) {
@@ -361,7 +354,7 @@
     large    = c(J = 0.10, SA = 0.30, A = 0.55)    # juveniles much harder to see
   )
 
-  n_reps <- 20   # start small (5-10) to check timing, then increase
+  n_reps <- 20   
 
   # storage: one results table per scenario, rows = reps,
   # columns = pi_age[trt,age] flattened + p_age
@@ -449,9 +442,9 @@
 ## ------------------------------------------------------------
 
   # bias = mean(estimate) - truth, per treatment/age, per scenario
-  # this tells you directly whether a bigger detection gap pushes the
+  # shows directly whether a bigger detection gap pushes the
   # age-composition estimate away from the true value, and whether
-  # your sparsest treatment (BS) is hit hardest
+  # the sparsest treatment (BS) is hit hardest
 
   for (scen in names(detection_scenarios)) {
 
@@ -470,8 +463,8 @@
     }
   }
 
-  # boxplots: one figure per scenario, true value marked in red,
-  # so you can see at a glance whether boxes are centered on the red dots
+  # boxplots: one figure per scenario, true value marked in red
+  # see whether boxes are centered on the red dots
   # and whether that gets worse as the detection gap widens
   for (scen in names(detection_scenarios)) {
     pi_res <- results_all[[scen]]$pi_age
