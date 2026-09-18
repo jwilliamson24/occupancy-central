@@ -6,7 +6,11 @@
 ## Date Created: 7/24/2026
 ##
 ## Description: Stress-test companion to nmix_model_with_covs_simulator5.R.
-##
+
+
+## DECIDED THAT THIS WAS NOT USEFUL AND WAS JUST A RABBIT HOLE - DONT NEED **************************
+
+
 ## That script validated the full covariate model once, at a specific set
 ## of true detection-covariate effect sizes (temp/soil/days/observer).
 ## This script asks: how much does age-composition recovery (pi_age_baseline)
